@@ -52,11 +52,13 @@ class SignDetector:
                 if (not self.see_first):
                     #record current time as time that first saw first stop sign
                     self.stop_sign_1_start_time = rospy.get_rostime().nsecs
+                    self.see_first = True
                 
                 #if have not yet seen the second stop sign
                 elif (not self.see_second):
                     #record current time as time that first saw second stop sign
                     self.stop_sign_2_start_time = rospy.get_rostime().nsecs
+                    self.see_second = True
         
          
     def check_stop(self):
