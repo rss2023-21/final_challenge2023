@@ -45,6 +45,9 @@ class SignDetector:
             x_max = bounding_box[2]
             y_max = bounding_box[3]
             
+            
+            rospy.logerr('X Size: ' + str(x_max - x_min) + ', Y Size: ' + str(y_max - y_min))
+            
             #if either the width or height is greater than our tuned threshold
             if abs(x_max-x_min) > self.size_threshold or abs(y_max - y_min > self.size_threshold):
                 
