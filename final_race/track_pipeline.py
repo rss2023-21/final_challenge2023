@@ -6,15 +6,7 @@ from homography import get_homography_matrix
 # homography matrix (from lab4 visual servoing)
 M = get_homography_matrix()
 
-# start timing
-start = time.time()
-
-for i in range(1, 9):
-    if i != 7: 
-        continue
-    
-    img = cv2.imread('samples/track{0}.png'.format(i))
-    
+def get_filtered_lines(img):
     # crop image to only include the bottom half 
     # (where the track is)
     height, width, channels = img.shape
@@ -25,10 +17,11 @@ for i in range(1, 9):
     width = 400
     height = 300
     img_out = cv2.warpPerspective(img, M, (width, height))
+    
     # flip vertically
     img_out = cv2.flip(img_out, 0)
 
-    cv2.imwrite('outputs/homography{0}.png'.format(i), img_out)
+    # cv2.imwrite('outputs/homography{0}.png'.format(i), img_out)
 
     # use homographied image
     img = img_out
@@ -38,11 +31,15 @@ for i in range(1, 9):
 
     # threshold white color
     thresh = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY)[1]
-    cv2.imwrite('thresh.png', thresh)
+    # cv2.imwrite('thresh.png', thresh)
 
     # hough line transform
     lines = cv2.HoughLinesP(thresh, rho=1, theta=np.pi/180, threshold=50, minLineLength=150, maxLineGap=10)
     lines_filtered = []
+
+    if lines is None:
+        return img, lines_filtered
+
     for line in lines:
         x1, y1, x2, y2 = line[0]
 
@@ -66,9 +63,26 @@ for i in range(1, 9):
         thickness = 1 # adjust this to the desired line thickness
         cv2.line(img, (x1, y1), (x2, y2), (0, 0, 255), thickness)
 
-    # save img to output.png
-    cv2.imwrite('outputs/output{0}.png'.format(i), img)
+    lines_filtered = np.array(lines_filtered)
+    # cluster lines?
 
-# end timing
-end = time.time()
-print((end - start) / 8)
+    return img, lines_filtered
+
+
+if __name__ == '__main__':
+    # start timing
+    start = time.time()
+    for i in range(1, 9):
+        if i != 7: 
+            continue
+        
+        img = cv2.imread('samples/track{0}.png'.format(i))
+        
+        img, lines = get_filtered_lines(img)
+
+        # save img to output.png
+        cv2.imwrite('outputs/output{0}.png'.format(i), img)
+
+    # end timing
+    end = time.time()
+    print((end - start) / 8)
