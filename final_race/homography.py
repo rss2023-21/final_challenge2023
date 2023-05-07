@@ -12,6 +12,9 @@ from ackermann_msgs.msg import AckermannDriveStamped
 from visualization_msgs.msg import Marker
 from visual_servoing.msg import ConeLocation, ConeLocationPixel
 
+CENTER = 200
+XSCALE = 100
+
 def get_homography_matrix():
 
     #The following collection of pixel locations and corresponding relative
@@ -43,8 +46,8 @@ def get_homography_matrix():
     np_pts_ground = np_pts_ground * METERS_PER_INCH
     np_pts_ground = np.float32(np_pts_ground[:, np.newaxis, :])
 
-    np_pts_ground = np_pts_ground * 100
-    np_pts_ground[:, :, 1] += 200
+    np_pts_ground = np_pts_ground * XSCALE
+    np_pts_ground[:, :, 1] += CENTER
 
     # flip x and y
     np_pts_ground = np_pts_ground[:, :, ::-1]
