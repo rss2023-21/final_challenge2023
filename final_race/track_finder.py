@@ -77,8 +77,9 @@ class TrackFinder():
         # if abs(right_best - self.right_pos) < 0.2:
         #     self.right_pos = right_best
 
-        if abs(self.angle - angle_from_vertical) < 0.2:
-            self.angle = angle_from_vertical
+        self.angle = angle_from_vertical
+        # if abs(self.angle - angle_from_vertical) < 0.2:
+        #     self.angle = angle_from_vertical
 
         float_array_msg = Float32MultiArray()
         float_array_msg.data = [self.left_pos, self.right_pos, self.angle]

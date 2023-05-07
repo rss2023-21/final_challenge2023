@@ -30,7 +30,9 @@ class ParkingController():
         self.left_pos = -0.5
         self.right_pos = 0.5
         self.angle = 0
-        self.speed_constant = 0.25
+        self.speed_constant = 0.5
+        self.last_time = rospy.Time.now()
+        self.last_dist_error = 0
 
     def track_pos_callback(self, msg):
         self.left_pos = msg.data[0]
@@ -41,12 +43,14 @@ class ParkingController():
 
         dist_error = (self.left_pos + self.right_pos) / 2.0
         angle_error = self.angle
+        dT = rospy.Time.now() - self.last_time
+        dist_deriv = (dist_error - self.last_dist_error) / dT.to_sec()
 
-        kP = 1
+        kP = 0.4
         kD = 0
-        kP_angle = 0
+        kP_angle = 0.4
         
-        drive_angle = np.clip(-kP_angle * angle_error + (-kP) * dist_error, -0.34, 0.34)  # + kD * (dist_error - self.prev_error)
+        drive_angle = np.clip(-kP_angle * angle_error + (-kP) * dist_error + kD * dist_deriv, -0.34, 0.34)  # 
         drive_speed = self.speed_constant
             
         
@@ -56,6 +60,9 @@ class ParkingController():
 
         rospy.loginfo_throttle(0.5, [dist_error, angle_error])
         rospy.loginfo_throttle(0.5, drive_angle)
+
+        self.last_time = rospy.Time.now()
+        self.last_dist_error = dist_error
         self.drive_pub.publish(drive_cmd)
 
 
