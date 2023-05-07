@@ -49,24 +49,40 @@ class TrackFinder():
         # rospy.loginfo_throttle(0.5, x
         for x in x_intercept_filtered:
             # rospy.loginfo(0.5, x)
-            if abs(x-self.left_pos) < abs(left_best-self.left_pos):
+            if abs(x-(-0.5)) < abs(left_best-(-0.5)) and abs(x-(-0.5)) < 0.5:
                 left_best = x
             
-            if abs(x-self.right_pos) < abs(right_best-self.right_pos):
+            if abs(x-(0.5)) < abs(right_best-(0.5)) and abs(x-(0.5)) < 0.5:
                 right_best = x
+            # if abs(x-self.left_pos) < abs(left_best-self.left_pos):
+            #     left_best = x
+            
+            # if abs(x-self.right_pos) < abs(right_best-self.right_pos):
+            #     right_best = x
+        
+        if left_best == 1000:
+            if right_best != 1000:
+                left_best = right_best - 1
+        
+        if right_best == 1000:
+            if left_best != 1000:
+                right_best = left_best + 1
         
         # update if values are reasonable
-        if abs(left_best - self.left_pos) < 0.2:
-            self.left_pos = left_best
+        self.left_pos = left_best 
+        self.right_pos = right_best 
+        # if abs(left_best - self.left_pos) < 0.2:
+        #     self.left_pos = left_best
         
-        if abs(right_best - self.right_pos) < 0.2:
-            self.right_pos = right_best
+        # if abs(right_best - self.right_pos) < 0.2:
+        #     self.right_pos = right_best
 
         if abs(self.angle - angle_from_vertical) < 0.2:
             self.angle = angle_from_vertical
 
         float_array_msg = Float32MultiArray()
         float_array_msg.data = [self.left_pos, self.right_pos, self.angle]
+        self.info_pub.publish(float_array_msg)
 
         # rospy.loginfo_throttle(0.5, x_intercept_filtered)
         rospy.loginfo_throttle(0.5, [left_best, right_best, self.angle])
