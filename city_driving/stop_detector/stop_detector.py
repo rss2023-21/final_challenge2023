@@ -39,7 +39,7 @@ class SignDetector:
 
         #if we see a stop sign
         if (see_stop_sign):
-            #get sides of the bounding box
+            #get corners of the bounding box
             x_min = bounding_box[0]
             y_min = bounding_box[1]
             x_max = bounding_box[2]
