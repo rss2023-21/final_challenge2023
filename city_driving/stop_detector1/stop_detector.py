@@ -98,26 +98,26 @@ class SignDetector:
                 self.done_second = True
 
 
-    # def check_stop(self):
-    #     rospy.logerr('checking stop')
-    #     #get current time
-    #     curTime = rospy.get_rostime().nsecs
+    def check_stop(self):
+        rospy.logerr('checking stop')
+        #get current time
+        curTime = rospy.get_rostime().nsecs
         
-    #     #if have seen first stop sign
-    #     if (self.see_first and not self.done_first):
-    #         #if difference between current time and first time seeing stop sign is less than our stop time
-    #         if (abs(curTime - self.stop_sign_1_start_time) <= self.stop_time):
-    #             #stop the robot
-    #             self.stop_robot()
-    #         else:
-    #             self.done_first = True
+        #if have seen first stop sign
+        if (self.see_first and not self.done_first):
+            #if difference between current time and first time seeing stop sign is less than our stop time
+            if (abs(curTime - self.stop_sign_1_start_time) <= self.stop_time):
+                #stop the robot
+                self.stop_robot()
+            else:
+                self.done_first = True
 
-    #     #repeat the same thing for the second robot
-    #     if (self.see_second and not self.done_second):
-    #         if (abs(curTime - self.stop_sign_2_start_time) <= self.stop_time):
-    #             self.stop_robot()
-    #         else:
-    #             self.done_second = True
+        #repeat the same thing for the second robot
+        if (self.see_second and not self.done_second):
+            if (abs(curTime - self.stop_sign_2_start_time) <= self.stop_time):
+                self.stop_robot()
+            else:
+                self.done_second = True
     
     def stop_robot(self):
         rospy.logerr('stopping')
