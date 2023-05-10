@@ -42,26 +42,34 @@ class ParkingController():
 
         drive_cmd = AckermannDriveStamped()
 
-        dist_error = (self.left_pos + self.right_pos) / 2.0
+        dist_error = (self.left_pos + self.right_pos ) / 2.0 # - 0.1
         angle_error = self.angle
         dT = (rospy.Time.now() - self.last_time).to_sec()
         dist_deriv = (dist_error - self.last_dist_error) / dT
         self.total_error += dist_error * dT
 
         # 0.3 0 0 0.3
-        kP = 0.1 # ?
+        kP = 0.10 # ?
         kI = 0
-        kD = 0 # 0.03
+        kD = 0.0 # 0.03
         kP_angle = 0.3
+
+        # kP = 0.0
+        # kI = 0.0
+        # kD = 0.0
+        # kP_angle = 0.0
+
+        feedforward = 0.0
+        # feedforward = 0.015
         
-        drive_angle = np.clip(-kP_angle * angle_error + (-kP) * dist_error + (-kI) * self.total_error + (-kD) * dist_deriv, -0.34, 0.34)  # 
+        drive_angle = np.clip(feedforward + -kP_angle * angle_error + (-kP) * dist_error + (-kI) * self.total_error + (-kD) * dist_deriv, -0.34, 0.34)  # 
         drive_speed = self.speed_constant
         
         drive_cmd.header.stamp = rospy.Time.now()
         drive_cmd.drive.steering_angle = drive_angle
 
         # safety against close to edges of track 
-        drive_speed = drive_speed * np.clip((1.0 - 1.0 * abs(dist_error)), 0.2, 1.0)
+        drive_speed = drive_speed * np.clip((1.3 - 1.0 * abs(dist_error)), 0.2, 1.0)
         drive_cmd.drive.speed = drive_speed
 
         rospy.loginfo_throttle(0.5, [-kP_angle * angle_error, (-kP) * dist_error, (-kI) * self.total_error, (-kD) * dist_deriv, drive_speed,])
