@@ -30,7 +30,7 @@ class ParkingController():
         self.left_pos = -0.5
         self.right_pos = 0.5
         self.angle = 0
-        self.speed_constant = 2.0
+        self.speed_constant = 5.0
         self.last_time = rospy.Time.now()
         self.last_dist_error = 0
         self.total_error = 0
@@ -48,19 +48,23 @@ class ParkingController():
         dist_deriv = (dist_error - self.last_dist_error) / dT
         self.total_error += dist_error * dT
 
-        kP = 0.2  # ?
+        # 0.3 0 0 0.3
+        kP = 0.1 # ?
         kI = 0
-        kD = 0.2  # ?
-        kP_angle = 0.4
+        kD = 0 # 0.03
+        kP_angle = 0.3
         
         drive_angle = np.clip(-kP_angle * angle_error + (-kP) * dist_error + (-kI) * self.total_error + (-kD) * dist_deriv, -0.34, 0.34)  # 
         drive_speed = self.speed_constant
         
         drive_cmd.header.stamp = rospy.Time.now()
         drive_cmd.drive.steering_angle = drive_angle
+
+        # safety against close to edges of track 
+        drive_speed = drive_speed * np.clip((1.0 - 1.0 * abs(dist_error)), 0.2, 1.0)
         drive_cmd.drive.speed = drive_speed
 
-        rospy.loginfo_throttle(0.5, [-kP_angle * angle_error, (-kP) * dist_error, (-kI) * self.total_error, (-kD) * dist_deriv])
+        rospy.loginfo_throttle(0.5, [-kP_angle * angle_error, (-kP) * dist_error, (-kI) * self.total_error, (-kD) * dist_deriv, drive_speed,])
         # rospy.loginfo_throttle(0.5, [dist_error, angle_error])
         # rospy.loginfo_throttle(0.5, drive_angle)
 
