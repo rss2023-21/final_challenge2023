@@ -30,12 +30,18 @@ class ParkingController():
         self.left_pos = -0.5
         self.right_pos = 0.5
         self.angle = 0
-        self.speed_constant = 5.0
+        self.speed_constant = 9.0
         self.last_time = rospy.Time.now()
         self.last_dist_error = 0
+        self.last_angle_error = 0
+        self.last_drive_angle = 0
+        self.steering_deriv = 0
         self.total_error = 0
+        self.all_updates = []
+        self.counter = 0
 
     def track_pos_callback(self, msg):
+        self.counter += 1
         self.left_pos = msg.data[0]
         self.right_pos = msg.data[1]
         self.angle = msg.data[2]
@@ -45,7 +51,9 @@ class ParkingController():
         dist_error = (self.left_pos + self.right_pos ) / 2.0 # - 0.1
         angle_error = self.angle
         dT = (rospy.Time.now() - self.last_time).to_sec()
-        dist_deriv = (dist_error - self.last_dist_error) / dT
+        dist_deriv = (dist_error - self.last_dist_error)  #/ dT
+        angle_deriv = (angle_error - self.last_angle_error) / dT
+
         self.total_error += dist_error * dT
 
         # 0.3 0 0 0.3
@@ -53,6 +61,8 @@ class ParkingController():
         kI = 0
         kD = 0.0 # 0.03
         kP_angle = 0.3
+        kD_angle = 0.02
+        kD_steering = 0.0
 
         # kP = 0.0
         # kI = 0.0
@@ -62,22 +72,34 @@ class ParkingController():
         feedforward = 0.0
         # feedforward = 0.015
         
-        drive_angle = np.clip(feedforward + -kP_angle * angle_error + (-kP) * dist_error + (-kI) * self.total_error + (-kD) * dist_deriv, -0.34, 0.34)  # 
+        drive_angle = np.clip(feedforward + -kP_angle * angle_error + (-kP) * dist_error + (-kI) * self.total_error + (-kD) * dist_deriv + (-kD_steering)*self.steering_deriv + (-kD_angle) * angle_deriv, -0.34, 0.34)  #
+
         drive_speed = self.speed_constant
         
         drive_cmd.header.stamp = rospy.Time.now()
         drive_cmd.drive.steering_angle = drive_angle
 
         # safety against close to edges of track 
-        drive_speed = drive_speed * np.clip((1.3 - 1.0 * abs(dist_error)), 0.2, 1.0)
+        drive_speed = drive_speed * np.clip((1.0 - 2.0 * abs(dist_error)), 0.2, 1.0)
         drive_cmd.drive.speed = drive_speed
 
-        rospy.loginfo_throttle(0.5, [-kP_angle * angle_error, (-kP) * dist_error, (-kI) * self.total_error, (-kD) * dist_deriv, drive_speed,])
+        updates = [dist_error, angle_error, -kP_angle * angle_error, (-kP) * dist_error, (-kI) * self.total_error, (-kD) * dist_deriv, drive_speed, (-kD_steering)*self.steering_deriv, (-kD_angle) * angle_deriv]
+        self.all_updates.append(updates)
+
+        rospy.loginfo_throttle(0.5, updates)
         # rospy.loginfo_throttle(0.5, [dist_error, angle_error])
         # rospy.loginfo_throttle(0.5, drive_angle)
 
+        if (self.counter % 50) == 0:
+            all_updates = np.array(self.all_updates)
+            np.save('/home/racecar/racecar_ws/src/final_race/all_updates.npy', all_updates)
+
+
         self.last_time = rospy.Time.now()
         self.last_dist_error = dist_error
+        self.last_angle_error = angle_error
+        self.steering_deriv = drive_angle - self.last_drive_angle 
+        self.last_drive_angle = drive_angle
         self.drive_pub.publish(drive_cmd)
 
 
@@ -85,6 +107,7 @@ if __name__ == '__main__':
     try:
         rospy.init_node('ParkingController', anonymous=True)
         ParkingController()
+        rospy.loginfo('started')
         rospy.spin()
     except rospy.ROSInterruptException:
         pass

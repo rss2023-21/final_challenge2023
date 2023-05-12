@@ -31,6 +31,7 @@ class TrackFinder():
         self.bridge = CvBridge() # Converts between ROS images and OpenCV Images
 
     def image_callback(self, image_msg):
+        # rospy.loginfo('message received')
         image = self.bridge.imgmsg_to_cv2(image_msg, "bgr8")
         # cv2.imwrite('outputs/zed_image.png', image)
         new_image, x_intercept_filtered, angle_from_vertical = get_filtered_lines(image)
@@ -96,6 +97,7 @@ if __name__ == '__main__':
     try:
         rospy.init_node('TrackFinder', anonymous=True)
         TrackFinder()
+        rospy.loginfo('started')
         rospy.spin()
     except rospy.ROSInterruptException:
         pass
