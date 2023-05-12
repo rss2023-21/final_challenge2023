@@ -30,7 +30,8 @@ class ParkingController():
         self.left_pos = -0.5
         self.right_pos = 0.5
         self.angle = 0
-        self.speed_constant = 9.0
+        self.speed_constant = 14.0
+        self.start_time = rospy.Time.now()
         self.last_time = rospy.Time.now()
         self.last_dist_error = 0
         self.last_angle_error = 0
@@ -52,27 +53,33 @@ class ParkingController():
         angle_error = self.angle
         dT = (rospy.Time.now() - self.last_time).to_sec()
         dist_deriv = (dist_error - self.last_dist_error)  #/ dT
-        angle_deriv = (angle_error - self.last_angle_error) / dT
+        angle_deriv = (angle_error - self.last_angle_error) # / dT
 
         self.total_error += dist_error * dT
 
         # 0.3 0 0 0.3
-        kP = 0.10 # ?
-        kI = 0
+        # kP = 0.10 # ?
+        kP = 0.10
+        kI = 0 # 0.01
         kD = 0.0 # 0.03
         kP_angle = 0.3
-        kD_angle = 0.02
+        kD_angle = 0.02 # 0.04?
         kD_steering = 0.0
+
+        # if abs(kI * self.total_error) > 0.10:
+        #     self.total_error = 0
+
 
         # kP = 0.0
         # kI = 0.0
         # kD = 0.0
         # kP_angle = 0.0
 
-        feedforward = 0.0
+        feedforward = 0.0 #  -0.02
         # feedforward = 0.015
         
         drive_angle = np.clip(feedforward + -kP_angle * angle_error + (-kP) * dist_error + (-kI) * self.total_error + (-kD) * dist_deriv + (-kD_steering)*self.steering_deriv + (-kD_angle) * angle_deriv, -0.34, 0.34)  #
+        # drive_angle = feedforward
 
         drive_speed = self.speed_constant
         
@@ -83,7 +90,7 @@ class ParkingController():
         drive_speed = drive_speed * np.clip((1.0 - 2.0 * abs(dist_error)), 0.2, 1.0)
         drive_cmd.drive.speed = drive_speed
 
-        updates = [dist_error, angle_error, -kP_angle * angle_error, (-kP) * dist_error, (-kI) * self.total_error, (-kD) * dist_deriv, drive_speed, (-kD_steering)*self.steering_deriv, (-kD_angle) * angle_deriv]
+        updates = [(rospy.Time.now() - self.start_time).to_sec(), dist_error, angle_error, -kP_angle * angle_error, (-kP) * dist_error, (-kI) * self.total_error, (-kD) * dist_deriv, drive_speed, (-kD_steering)*self.steering_deriv, (-kD_angle) * angle_deriv]
         self.all_updates.append(updates)
 
         rospy.loginfo_throttle(0.5, updates)
